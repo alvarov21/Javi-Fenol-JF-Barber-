@@ -40,7 +40,46 @@
         }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col">
+<body class="antialiased min-h-screen flex flex-col overflow-hidden">
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="fixed inset-0 bg-black z-[100] flex items-center justify-center transition-opacity duration-500">
+        <div class="bg-[#0a0a0a] border border-[#333] p-8 rounded-xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">JF</div>
+            <h2 class="text-xl font-medium text-white mb-2">Acceso Privado</h2>
+            <p class="text-[#a1a1aa] text-sm mb-6">Introduce tu clave de administrador</p>
+            <input type="password" id="admin-pwd" placeholder="Contraseña..." class="w-full bg-[#111] border border-[#333] p-3 rounded-md text-white focus:outline-none focus:border-white transition-colors mb-4 text-center tracking-widest" onkeypress="if(event.key === 'Enter') checkLogin()">
+            <button onclick="checkLogin()" class="w-full bg-white text-black py-3 rounded-md font-medium hover:bg-gray-200 transition-colors">Entrar</button>
+            <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Contraseña incorrecta. Pista: 1234</p>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
+
+    <!-- Modal Nueva Cita Manual -->
+    <div id="new-booking-modal" class="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm">
+        <div class="bg-[#0a0a0a] border border-[#333] p-6 rounded-xl w-full max-w-md shadow-2xl">
+            <h2 class="text-lg font-medium text-white mb-4">Crear Cita Manual</h2>
+            <div class="space-y-4 mb-6">
+                <input type="text" id="manual-name" placeholder="Nombre del cliente" class="w-full bg-[#111] border border-[#333] p-3 rounded-md text-white text-sm focus:outline-none focus:border-white">
+                <input type="text" id="manual-phone" placeholder="Teléfono" class="w-full bg-[#111] border border-[#333] p-3 rounded-md text-white text-sm focus:outline-none focus:border-white">
+                <select id="manual-service" class="w-full bg-[#111] border border-[#333] p-3 rounded-md text-white text-sm focus:outline-none focus:border-white appearance-none">
+                    <option value="Corte Clásico / Fade">Corte Clásico / Fade</option>
+                    <option value="Corte + Barba (Combo VIP)">Corte + Barba (Combo VIP)</option>
+                    <option value="Arreglo de Barba">Arreglo de Barba</option>
+                </select>
+                <div class="flex gap-4">
+                    <input type="text" id="manual-date" value="Hoy" class="w-1/2 bg-[#111] border border-[#333] p-3 rounded-md text-white text-sm focus:outline-none focus:border-white">
+                    <input type="text" id="manual-time" placeholder="Ej: 16:00" class="w-1/2 bg-[#111] border border-[#333] p-3 rounded-md text-white text-sm focus:outline-none focus:border-white">
+                </div>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeModal()" class="px-4 py-2 text-[#a1a1aa] hover:text-white transition-colors text-sm font-medium">Cancelar</button>
+                <button onclick="saveManualBooking()" class="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-md text-sm font-medium transition-colors">Guardar Cita</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Top Navigation (Vercel Style) -->
     <nav class="border-b border-[#333] bg-black sticky top-0 z-50">
@@ -48,7 +87,7 @@
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-6">
                     <!-- Logo / Workspace -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 cursor-pointer" onclick="showToast('Estás en el panel de control principal.')">
                         <div class="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center font-bold text-sm">
                             JF
                         </div>
@@ -59,14 +98,14 @@
                     <!-- Links -->
                     <div class="hidden md:flex items-center gap-6 ml-8">
                         <a href="#" class="text-sm font-medium text-white border-b-2 border-white py-5">Bandeja de Citas</a>
-                        <a href="#" class="text-sm font-medium text-[#a1a1aa] hover:text-white transition-colors py-5">Agenda General</a>
-                        <a href="#" class="text-sm font-medium text-[#a1a1aa] hover:text-white transition-colors py-5">Clientes</a>
+                        <a href="#" onclick="showToast('Vista de Calendario Completo (Demo)')" class="text-sm font-medium text-[#a1a1aa] hover:text-white transition-colors py-5">Agenda General</a>
+                        <a href="#" onclick="showToast('Directorio de Clientes (Demo)')" class="text-sm font-medium text-[#a1a1aa] hover:text-white transition-colors py-5">Clientes</a>
                     </div>
                 </div>
                 
                 <div class="flex items-center gap-4">
-                    <button class="text-[#a1a1aa] hover:text-white transition-colors"><i class="fa-regular fa-bell"></i></button>
-                    <div class="w-8 h-8 rounded-full bg-[#333] border border-[#444] overflow-hidden">
+                    <button onclick="showToast('No tienes notificaciones nuevas.')" class="text-[#a1a1aa] hover:text-white transition-colors"><i class="fa-regular fa-bell"></i></button>
+                    <div onclick="showToast('Abriendo perfil de Javi...')" class="w-8 h-8 rounded-full bg-[#333] border border-[#444] overflow-hidden cursor-pointer hover:border-white transition-colors">
                         <img src="./javi-profile.webp" alt="Admin" class="w-full h-full object-cover">
                     </div>
                 </div>
@@ -83,10 +122,10 @@
                 <p class="text-[#a1a1aa] text-sm">Gestiona las nuevas solicitudes de reserva entrantes.</p>
             </div>
             <div class="flex gap-3">
-                <button class="bg-[#111] hover:bg-[#1a1a1a] text-white border border-[#333] px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                <button onclick="showToast('Abriendo ajustes del salón...')" class="bg-[#111] hover:bg-[#1a1a1a] text-white border border-[#333] px-4 py-2 rounded-md text-sm font-medium transition-colors">
                     Configuración
                 </button>
-                <button class="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                <button onclick="openModal()" class="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-md text-sm font-medium transition-colors">
                     Nueva Cita Manual
                 </button>
             </div>
@@ -254,6 +293,86 @@
                 badge.classList.replace('border-green-500/40', 'border-blue-500/20');
             }, 3000);
         });
+
+        // ==========================================
+        // Funciones añadidas (Login, Modal, Toasts)
+        // ==========================================
+
+        function checkLogin() {
+            const pwd = document.getElementById('admin-pwd').value;
+            if (pwd === '1234') {
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                }, 500);
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-[#111] border border-[#333] text-white px-4 py-3 rounded-md text-sm shadow-lg flex items-center gap-3 transform translate-y-10 opacity-0 transition-all duration-300';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-[#a1a1aa]"></i> ${message}`;
+            
+            container.appendChild(toast);
+            
+            // Animar entrada
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            });
+            
+            // Eliminar después de 3s
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function openModal() {
+            const modal = document.getElementById('new-booking-modal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('new-booking-modal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            // Limpiar inputs
+            document.getElementById('manual-name').value = '';
+            document.getElementById('manual-phone').value = '';
+            document.getElementById('manual-time').value = '';
+        }
+
+        function saveManualBooking() {
+            const name = document.getElementById('manual-name').value;
+            const phone = document.getElementById('manual-phone').value;
+            const service = document.getElementById('manual-service').value;
+            const date = document.getElementById('manual-date').value;
+            const time = document.getElementById('manual-time').value;
+
+            if (!name || !time) {
+                showToast("Por favor, rellena el nombre y la hora.");
+                return;
+            }
+
+            // Usar la función de db.js
+            const newBooking = createBooking({
+                clientName: name,
+                phone: phone,
+                service: service,
+                date: date,
+                time: time,
+                duration: service.includes('Combo') ? '1h 15m' : '45 min'
+            });
+
+            // La creamos como confirmada directamente
+            updateBookingStatus(newBooking.id, 'accepted');
+            
+            closeModal();
+            renderBookings();
+            showToast("Cita manual añadida correctamente.");
+        }
     </script>
 </body>
 </html>
