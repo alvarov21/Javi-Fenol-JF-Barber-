@@ -195,8 +195,10 @@
             'Corte + Barba (Combo VIP)': 25
         };
 
+        window.allBookings = [];
         async function renderBookings() {
-            const bookings = await getBookings();
+            window.allBookings = await getBookings();
+            const bookings = window.allBookings;
             bookings.sort((a, b) => b.timestamp - a.timestamp); // Más recientes primero
             const container = document.getElementById('booking-list');
             
@@ -263,6 +265,15 @@
         }
 
         async function handleStatus(id, status) {
+            // Ejecutar envío de WhatsApp síncronamente primero para evitar bloqueos del navegador
+            if(status === 'accepted') {
+                const b = window.allBookings.find(x => x.id === id);
+                if(b && b.phone) {
+                    const msg = `¡Hola ${b.clientName}! Te escribo de JF Barber. Tu cita para el ${b.date} a las ${b.time} está confirmada. ¡Nos vemos pronto!`;
+                    window.open(`https://wa.me/34${b.phone.replace(/\s+/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
+                }
+            }
+            
             await updateBookingStatus(id, status);
             await renderBookings();
         }
