@@ -55,7 +55,7 @@
             <h2 class="text-xl font-medium text-white mb-2">Acceso Privado</h2>
             <p class="text-[#a1a1aa] text-sm mb-6">Introduce tu clave de administrador</p>
             <input type="password" id="admin-pwd" placeholder="Contraseña..." class="w-full bg-[#111] border border-[#333] p-3 rounded-md text-white focus:outline-none focus:border-white transition-colors mb-4 text-center tracking-widest" onkeypress="if(event.key === 'Enter') checkLogin()">
-            <button onclick="checkLogin()" class="w-full bg-white text-black py-3 rounded-md font-medium hover:bg-gray-200 transition-colors">Entrar</button>
+            <button id="login-btn" onclick="checkLogin()" class="w-full bg-white text-black py-3 rounded-md font-medium hover:bg-gray-200 transition-colors">Entrar</button>
             <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Contraseña incorrecta.</p>
         </div>
     </div>
@@ -284,29 +284,65 @@
             await renderBookings();
         }
 
-        // Renderizar al cargar
-        renderBookings();
+        // No renderizar globalmente sin login, se hace en el DOMContentLoaded
+        // renderBookings();
         
         // Polling para mantener sincronizado en tiempo real por internet
         setInterval(() => {
-            renderBookings();
+            if (localStorage.getItem('jf_admin_token')) {
+                renderBookings();
+            }
         }, 5000);
 
         // ==========================================
         // Funciones añadidas (Login, Modal, Toasts)
         // ==========================================
 
-        function checkLogin() {
+        async function checkLogin() {
             const pwd = document.getElementById('admin-pwd').value;
-            if (pwd === 'javibarber7') {
+            const btn = document.getElementById('login-btn');
+            btn.innerText = 'Verificando...';
+            
+            localStorage.setItem('jf_admin_token', pwd);
+            
+            const token = getAdminToken();
+            const headers = { 'Authorization': `Bearer ${token}` };
+            const response = await fetch('/api/bookings?verify=1', { headers });
+            
+            if (response.ok) {
                 document.getElementById('login-overlay').style.opacity = '0';
                 setTimeout(() => {
                     document.getElementById('login-overlay').classList.add('hidden');
                 }, 500);
+                await renderBookings();
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
+                localStorage.removeItem('jf_admin_token');
             }
+            btn.innerText = 'Entrar';
         }
+
+        window.addEventListener('unauthorized', () => {
+            const overlay = document.getElementById('login-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+            }, 50);
+        });
+        
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (localStorage.getItem('jf_admin_token')) {
+                const response = await fetch('/api/bookings?verify=1', { 
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jf_admin_token')}` } 
+                });
+                if (response.ok) {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    renderBookings();
+                } else {
+                    localStorage.removeItem('jf_admin_token');
+                }
+            }
+        });
 
         function showToast(message) {
             const container = document.getElementById('toast-container');

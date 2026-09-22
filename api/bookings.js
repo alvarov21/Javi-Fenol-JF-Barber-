@@ -7,15 +7,16 @@ const redis = new Redis({
 });
 
 const BOOKINGS_KEY = 'jfbarber_bookings';
+const ADMIN_SECRET = 'javibarber7'; // Se puede pasar a process.env.ADMIN_PASSWORD en el futuro
 
 module.exports = async (req, res) => {
-  // Configurar CORS por si acaso
+  // Configurar CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   if (req.method === 'OPTIONS') {
@@ -23,17 +24,40 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const authHeader = req.headers.authorization;
+  const isAdmin = authHeader === `Bearer ${ADMIN_SECRET}`;
+
+  // Si envían un token pero es incorrecto
+  if (authHeader && !isAdmin) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
+    let bookings = await redis.get(BOOKINGS_KEY);
+    if (!bookings) bookings = [];
+
     if (req.method === 'GET') {
-      let bookings = await redis.get(BOOKINGS_KEY);
-      if (!bookings) bookings = [];
-      return res.status(200).json(bookings);
+      if (req.query.verify === '1') {
+         return res.status(isAdmin ? 200 : 401).json({ valid: isAdmin });
+      }
+
+      if (isAdmin) {
+        return res.status(200).json(bookings);
+      } else {
+        // SANITIZACIÓN: Eliminar datos personales (RGPD) para el frontend público
+        const sanitized = bookings.map(b => ({
+          id: b.id,
+          date: b.date,
+          fullDate: b.fullDate,
+          time: b.time,
+          status: b.status
+        }));
+        return res.status(200).json(sanitized);
+      }
     } 
     
     if (req.method === 'POST') {
       const newBooking = req.body;
-      let bookings = await redis.get(BOOKINGS_KEY);
-      if (!bookings) bookings = [];
       
       // Comprobar si ya existe una reserva para ese día y hora (que esté aceptada)
       const isTaken = bookings.some(b => 
@@ -53,11 +77,13 @@ module.exports = async (req, res) => {
     }
     
     if (req.method === 'PUT') {
+      if (!isAdmin) {
+          return res.status(401).json({ error: 'Unauthorized' });
+      }
+
       const { id, status } = req.body;
-      let bookings = await redis.get(BOOKINGS_KEY);
-      if (!bookings) bookings = [];
-      
       const index = bookings.findIndex(b => b.id === id);
+      
       if (index !== -1) {
         bookings[index].status = status;
         await redis.set(BOOKINGS_KEY, bookings);
