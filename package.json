@@ -1,0 +1,24 @@
+{
+  "name": "javi-fenol-jf-barber",
+  "version": "1.0.0",
+  "description": "Este repositorio contiene la versión fundacional (MVP - Producto Mínimo Viable) del Frontend para un futuro **SaaS Multi-tenant de gestión de Barberías Premium**.",
+  "main": "db.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alvarov21/Javi-Fenol-JF-Barber-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/alvarov21/Javi-Fenol-JF-Barber-/issues"
+  },
+  "homepage": "https://github.com/alvarov21/Javi-Fenol-JF-Barber-#readme",
+  "dependencies": {
+    "@upstash/redis": "^1.39.0"
+  }
+}

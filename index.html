@@ -439,7 +439,7 @@
                     document.getElementById('progress-line').style.width = progress + '%';
                 }
                 
-                function confirmBooking() {
+                async function confirmBooking() {
                     const name = document.getElementById('client-name').value;
                     const phone = document.getElementById('client-phone').value;
                     
@@ -448,8 +448,12 @@
                         return;
                     }
                     
-                    // Guardar en la base de datos simulada
-                    createBooking({
+                    // Cambiar texto de botón para dar feedback
+                    const btn = event.currentTarget || document.querySelector('#step3 button.bg-white');
+                    if (btn) btn.innerText = "Confirmando...";
+                    
+                    // Guardar en la base de datos de la nube
+                    await createBooking({
                         clientName: name,
                         phone: phone,
                         service: currentBooking.service,
