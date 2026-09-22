@@ -35,6 +35,17 @@ module.exports = async (req, res) => {
       let bookings = await redis.get(BOOKINGS_KEY);
       if (!bookings) bookings = [];
       
+      // Comprobar si ya existe una reserva para ese día y hora (que esté aceptada)
+      const isTaken = bookings.some(b => 
+          (b.fullDate === newBooking.fullDate || b.date === newBooking.date) && 
+          b.time === newBooking.time && 
+          b.status === 'accepted'
+      );
+      
+      if (isTaken) {
+          return res.status(409).json({ error: 'La hora ya ha sido ocupada por otra persona.' });
+      }
+      
       bookings.push(newBooking);
       await redis.set(BOOKINGS_KEY, bookings);
       

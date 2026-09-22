@@ -30,13 +30,17 @@ async function createBooking(bookingData) {
             body: JSON.stringify(newBooking)
         });
         
-        // Simular evento local (para mantener UX fluida si están en el mismo equipo temporalmente)
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Error al procesar la reserva. Puede que la hora ya esté ocupada.');
+        }
+        
         window.dispatchEvent(new Event('storage'));
         
-        return await response.json();
+        return { success: true, data: await response.json() };
     } catch (e) {
         console.error("Error guardando cita:", e);
-        return newBooking; // fallback optimista
+        return { success: false, error: e.message };
     }
 }
 

@@ -460,14 +460,23 @@
                     if (btn) btn.innerText = "Confirmando...";
                     
                     // Guardar en la base de datos de la nube
-                    await createBooking({
+                    const result = await createBooking({
                         clientName: name,
                         phone: phone,
                         service: currentBooking.service,
                         date: currentBooking.date,
+                        fullDate: currentBooking.fullDate,
                         time: currentBooking.time,
                         duration: currentBooking.duration
                     });
+
+                    if (!result.success) {
+                        if (btn) btn.innerText = "CONFIRMAR CITA";
+                        alert("No se pudo reservar la hora: " + result.error);
+                        // Refrescar disponibilidad
+                        await initBookings();
+                        return;
+                    }
 
                     document.querySelectorAll('.booking-step').forEach(el => el.classList.add('hidden'));
                     document.getElementById('step-success').classList.remove('hidden');
@@ -497,6 +506,9 @@
                             btn.className = 'date-btn flex-shrink-0 w-16 h-20 border flex flex-col items-center justify-center gap-1 rounded-sm transition-all ' + 
                                 (isToday ? 'active border-white bg-white/5 shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'border-white/10 hover:border-white/50');
                             
+                            const isoDate = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
+                            btn.dataset.fulldate = isoDate;
+                            
                             btn.innerHTML = `
                                 <span class="text-xs text-gray-400">${dayName}</span>
                                 <span class="text-xl font-bold text-white">${dayNumber}</span>
@@ -506,6 +518,7 @@
                             
                             if (isToday) {
                                 currentBooking.date = `${dayName} ${dayNumber}`;
+                                currentBooking.fullDate = isoDate;
                             }
                             daysAdded++;
                         }
@@ -537,6 +550,7 @@
                             b.className = 'date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all';
                         });
                         
+                        const isoDate = e.target.value; // YYYY-MM-DD
                         const selectedParts = e.target.value.split('-'); 
                         const selected = new Date(selectedParts[0], selectedParts[1]-1, selectedParts[2]);
                         
@@ -550,6 +564,7 @@
                         moreBtn.querySelector('span.text-xl').innerHTML = dayNum;
                         
                         currentBooking.date = `${dayName} ${dayNum} ${monthName}`;
+                        currentBooking.fullDate = isoDate;
                         updateSummary();
                         updateAvailableTimes(); // <-- Check ocupados
                     });
@@ -569,6 +584,7 @@
                             
                             this.className = 'date-btn active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)]';
                             currentBooking.date = this.querySelector('span.text-xs').innerText + ' ' + this.querySelector('span.text-xl').innerText;
+                            currentBooking.fullDate = this.dataset.fulldate;
                             updateSummary();
                             updateAvailableTimes(); // <-- Check ocupados
                         });
@@ -591,8 +607,8 @@
                 function updateAvailableTimes() {
                     if (!allBookings) return;
                     
-                    // Encontrar citas para el día seleccionado que no estén canceladas
-                    const dayBookings = allBookings.filter(b => b.date === currentBooking.date && b.status !== 'Cancelada');
+                    // Encontrar citas para el día seleccionado que estén confirmadas
+                    const dayBookings = allBookings.filter(b => (b.fullDate === currentBooking.fullDate || b.date === currentBooking.date) && b.status === 'accepted');
                     const bookedTimes = dayBookings.map(b => b.time);
                     
                     document.querySelectorAll('.time-btn').forEach(btn => {
