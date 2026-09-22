@@ -312,8 +312,8 @@
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">10:00</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">10:30</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">11:00</button>
-                            <button class="time-btn py-2 border border-white/10 text-white opacity-40 cursor-not-allowed pointer-events-none text-sm">11:30</button>
-                            <button class="time-btn py-2 border border-white bg-white/5 text-white font-bold transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)] text-sm">12:00</button>
+                            <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">11:30</button>
+                            <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">12:00</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">12:30</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">13:00</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">13:30</button>
@@ -323,7 +323,7 @@
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">16:00</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">16:30</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">17:00</button>
-                            <button class="time-btn py-2 border border-white/10 text-white opacity-40 cursor-not-allowed pointer-events-none text-sm">17:30</button>
+                            <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">17:30</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">18:00</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">18:30</button>
                             <button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm">19:00</button>
@@ -527,12 +527,11 @@
                     datePicker.addEventListener('change', function(e) {
                         if(!e.target.value) return; 
                         
-                        // Quitar activo a los demás
                         document.querySelectorAll('.date-btn').forEach(b => {
                             b.className = 'date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all';
                         });
                         
-                        const selectedParts = e.target.value.split('-'); // YYYY-MM-DD
+                        const selectedParts = e.target.value.split('-'); 
                         const selected = new Date(selectedParts[0], selectedParts[1]-1, selectedParts[2]);
                         
                         moreBtn.className = 'date-btn-more active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)] cursor-pointer relative overflow-hidden';
@@ -546,16 +545,15 @@
                         
                         currentBooking.date = `${dayName} ${dayNum} ${monthName}`;
                         updateSummary();
+                        updateAvailableTimes(); // <-- Check ocupados
                     });
                     
-                    // Attach events to standard buttons
                     document.querySelectorAll('.date-btn').forEach(btn => {
                         btn.addEventListener('click', function() {
                             document.querySelectorAll('.date-btn').forEach(b => {
                                 b.className = 'date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all';
                             });
                             
-                            // Reset moreBtn visual
                             const more = document.querySelector('.date-btn-more');
                             if(more) {
                                 more.className = 'date-btn-more flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all cursor-pointer relative overflow-hidden';
@@ -566,18 +564,66 @@
                             this.className = 'date-btn active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)]';
                             currentBooking.date = this.querySelector('span.text-xs').innerText + ' ' + this.querySelector('span.text-xl').innerText;
                             updateSummary();
+                            updateAvailableTimes(); // <-- Check ocupados
                         });
                     });
                 }
                 
                 setupDynamicDates();
                 
-                document.querySelectorAll('.time-btn:not(.cursor-not-allowed)').forEach(btn => {
+                // --- INTEGRACIÓN BASE DE DATOS (Deshabilitar Horas Ocupadas) ---
+                let allBookings = [];
+                async function initBookings() {
+                    try {
+                        allBookings = await getBookings();
+                        updateAvailableTimes();
+                    } catch(e) {
+                        console.error('Error fetching bookings:', e);
+                    }
+                }
+                
+                function updateAvailableTimes() {
+                    if (!allBookings) return;
+                    
+                    // Encontrar citas para el día seleccionado que no estén canceladas
+                    const dayBookings = allBookings.filter(b => b.date === currentBooking.date && b.status !== 'Cancelada');
+                    const bookedTimes = dayBookings.map(b => b.time);
+                    
+                    document.querySelectorAll('.time-btn').forEach(btn => {
+                        const t = btn.innerText;
+                        if(bookedTimes.includes(t)) {
+                            // Bloquear hora
+                            btn.className = 'time-btn py-2 border border-white/10 text-white opacity-20 cursor-not-allowed pointer-events-none text-sm';
+                        } else {
+                            // Liberar hora
+                            if(currentBooking.time === t) {
+                                btn.className = 'time-btn py-2 border border-white bg-white/5 text-white font-bold transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)] text-sm';
+                            } else {
+                                btn.className = 'time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm';
+                            }
+                        }
+                    });
+                    
+                    // Resetear la hora elegida si justo estaba ocupada
+                    if(bookedTimes.includes(currentBooking.time)) {
+                        currentBooking.time = '';
+                        updateSummary();
+                    }
+                }
+                
+                // Inicializamos pidiendo datos a la BD
+                initBookings();
+
+                document.querySelectorAll('.time-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
-                        document.querySelectorAll('.time-btn:not(.cursor-not-allowed)').forEach(b => {
-                            b.className = 'time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all';
+                        if (this.classList.contains('cursor-not-allowed')) return;
+                        
+                        document.querySelectorAll('.time-btn').forEach(b => {
+                            if (!b.classList.contains('cursor-not-allowed')) {
+                                b.className = 'time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm';
+                            }
                         });
-                        this.className = 'time-btn py-2 border border-white bg-white/5 text-white font-bold transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)]';
+                        this.className = 'time-btn py-2 border border-white bg-white/5 text-white font-bold transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)] text-sm';
                         currentBooking.time = this.innerText;
                         updateSummary();
                     });
