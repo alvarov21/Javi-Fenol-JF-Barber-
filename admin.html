@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JF Barber | Panel de Control</title>
+    <!-- Web App / PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JF Barber">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.jpg">
+    <link rel="icon" type="image/jpeg" href="/apple-touch-icon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -50,7 +56,7 @@
             <p class="text-[#a1a1aa] text-sm mb-6">Introduce tu clave de administrador</p>
             <input type="password" id="admin-pwd" placeholder="Contraseña..." class="w-full bg-[#111] border border-[#333] p-3 rounded-md text-white focus:outline-none focus:border-white transition-colors mb-4 text-center tracking-widest" onkeypress="if(event.key === 'Enter') checkLogin()">
             <button onclick="checkLogin()" class="w-full bg-white text-black py-3 rounded-md font-medium hover:bg-gray-200 transition-colors">Entrar</button>
-            <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Contraseña incorrecta. Pista: 1234</p>
+            <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Contraseña incorrecta.</p>
         </div>
     </div>
 
@@ -292,7 +298,7 @@
 
         function checkLogin() {
             const pwd = document.getElementById('admin-pwd').value;
-            if (pwd === '1234') {
+            if (pwd === 'javibarber7') {
                 document.getElementById('login-overlay').style.opacity = '0';
                 setTimeout(() => {
                     document.getElementById('login-overlay').classList.add('hidden');
