@@ -468,18 +468,20 @@
                     document.querySelector('.flex.justify-between.mb-8.relative.z-10').classList.add('hidden');
                 }
                 
-                // Fechas dinámicas (España / Local)
+                // Fechas dinámicas (España / Local) con calendario completo
                 function setupDynamicDates() {
                     const container = document.getElementById('dates-container');
                     container.innerHTML = '';
                     
                     const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                    const mesesCortos = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
                     
                     let dateObj = new Date();
                     let daysAdded = 0;
                     let i = 0;
                     
-                    while (daysAdded < 10 && i < 30) {
+                    // Solo 7 días a la vista
+                    while (daysAdded < 7 && i < 30) {
                         if (dateObj.getDay() !== 0) { // Si no es domingo
                             const isToday = (daysAdded === 0 && dateObj.getDate() === new Date().getDate());
                             const dayName = isToday ? 'Hoy' : diasSemana[dateObj.getDay()];
@@ -505,12 +507,62 @@
                         i++;
                     }
                     
-                    // Attach events to new buttons
+                    // Botón de "Más fechas" (Calendario nativo)
+                    const moreBtn = document.createElement('label');
+                    moreBtn.className = 'date-btn-more flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all cursor-pointer relative overflow-hidden';
+                    moreBtn.innerHTML = `
+                        <span class="text-xs text-gray-400">Más</span>
+                        <span class="text-xl font-bold text-white"><i class="fa-regular fa-calendar"></i></span>
+                        <!-- El calendario nativo invisible que se abre al tocar -->
+                        <input type="date" class="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" style="font-size: 100px;">
+                    `;
+                    container.appendChild(moreBtn);
+                    
+                    const datePicker = moreBtn.querySelector('input');
+                    // Bloquear fechas pasadas
+                    const hoy = new Date();
+                    hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset()); // Fix UTC offset
+                    datePicker.min = hoy.toISOString().split('T')[0];
+                    
+                    datePicker.addEventListener('change', function(e) {
+                        if(!e.target.value) return; 
+                        
+                        // Quitar activo a los demás
+                        document.querySelectorAll('.date-btn').forEach(b => {
+                            b.className = 'date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all';
+                        });
+                        
+                        const selectedParts = e.target.value.split('-'); // YYYY-MM-DD
+                        const selected = new Date(selectedParts[0], selectedParts[1]-1, selectedParts[2]);
+                        
+                        moreBtn.className = 'date-btn-more active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)] cursor-pointer relative overflow-hidden';
+                        
+                        const dayName = diasSemana[selected.getDay()];
+                        const dayNum = selected.getDate();
+                        const monthName = mesesCortos[selected.getMonth()];
+                        
+                        moreBtn.querySelector('span.text-xs').innerText = monthName;
+                        moreBtn.querySelector('span.text-xl').innerHTML = dayNum;
+                        
+                        currentBooking.date = `${dayName} ${dayNum} ${monthName}`;
+                        updateSummary();
+                    });
+                    
+                    // Attach events to standard buttons
                     document.querySelectorAll('.date-btn').forEach(btn => {
                         btn.addEventListener('click', function() {
                             document.querySelectorAll('.date-btn').forEach(b => {
                                 b.className = 'date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all';
                             });
+                            
+                            // Reset moreBtn visual
+                            const more = document.querySelector('.date-btn-more');
+                            if(more) {
+                                more.className = 'date-btn-more flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all cursor-pointer relative overflow-hidden';
+                                more.querySelector('span.text-xs').innerText = 'Más';
+                                more.querySelector('span.text-xl').innerHTML = '<i class="fa-regular fa-calendar"></i>';
+                            }
+                            
                             this.className = 'date-btn active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)]';
                             currentBooking.date = this.querySelector('span.text-xs').innerText + ' ' + this.querySelector('span.text-xl').innerText;
                             updateSummary();
