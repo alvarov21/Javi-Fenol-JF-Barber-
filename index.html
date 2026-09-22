@@ -688,12 +688,15 @@
                 
                 <div class="h-80 bg-brand-800 border border-white/10 relative overflow-hidden group">
                     <!-- Mapa simulado o incrustado -->
-                    <div class="absolute inset-0 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=38.0833,-0.95&zoom=14&size=600x400&maptype=roadmap&style=feature:all|element:labels.text.fill|color:0xffffff&style=feature:all|element:labels.text.stroke|color:0x000000&style=feature:all|element:labels.icon|visibility:off&style=feature:administrative|element:geometry.fill|color:0x000000&style=feature:administrative|element:geometry.stroke|color:0x144b53&style=feature:landscape|element:all|color:0x08304b&style=feature:poi|element:geometry|color:0x0c4152&style=feature:road.highway|element:geometry.fill|color:0x000000&style=feature:road.highway|element:geometry.stroke|color:0x0b434f&style=feature:road.arterial|element:geometry.fill|color:0x000000&style=feature:road.arterial|element:geometry.stroke|color:0x0b3d51&style=feature:road.local|element:geometry|color:0x000000&style=feature:transit|element:all|color:0x146474&style=feature:water|element:all|color:0x021019')] bg-cover bg-center grayscale opacity-60 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-500"></div>
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="bg-red-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)]">
-                            <i class="fa-solid fa-location-dot"></i>
-                        </div>
-                    </div>
+                    <iframe 
+                        src="https://maps.google.com/maps?q=JF%20Barber,%20La%20Aparecida,%20Orihuela&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                        class="absolute inset-0 w-full h-full grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition-all duration-500" 
+                        frameborder="0" 
+                        style="border:0;" 
+                        allowfullscreen="" 
+                        aria-hidden="false" 
+                        tabindex="0">
+                    </iframe>
                 </div>
             </div>
             
