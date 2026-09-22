@@ -701,7 +701,8 @@
             </div>
             
             <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                <p class="text-xs text-gray-500 uppercase tracking-widest">© 2024 JF Barber. Todos los derechos reservados.</p>
+                <p class="text-xs text-gray-500 uppercase tracking-widest">&copy; <span id="current-year">2026</span> JF Barber. Todos los derechos reservados.</p>
+                <script>document.getElementById('current-year').textContent = new Date().getFullYear();</script>
                 <div class="flex gap-6">
                     <a href="https://instagram.com/javiifenoll_" class="text-gray-500 hover:text-white transition-colors"><i class="fa-brands fa-instagram text-xl"></i></a>
                     <a href="https://tiktok.com/@javiifenoll_" class="text-gray-500 hover:text-white transition-colors"><i class="fa-brands fa-tiktok text-xl"></i></a>
