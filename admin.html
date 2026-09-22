@@ -264,14 +264,6 @@
         function handleStatus(id, status, phone, name, date, time) {
             updateBookingStatus(id, status);
             renderBookings();
-
-            if (status === 'accepted' && phone) {
-                // Formatear mensaje para WhatsApp
-                const text = encodeURIComponent(`Hola ${name} 👋\n\nTe confirmo tu cita en *JF Barber* para el *${date}* a las *${time}*.\n\n¡Te esperamos!`);
-                const cleanPhone = phone.replace(/[^0-9]/g, '');
-                const phoneWithPrefix = cleanPhone.length === 9 ? '34' + cleanPhone : cleanPhone;
-                window.open(`https://wa.me/${phoneWithPrefix}?text=${text}`, '_blank');
-            }
         }
 
         // Renderizar al cargar
