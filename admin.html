@@ -130,101 +130,13 @@
             <div class="px-6 py-4 border-b border-[#333] flex justify-between items-center bg-[#050505]">
                 <h2 class="font-medium">Solicitudes Recientes</h2>
                 <div class="flex gap-2">
-                    <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-md text-xs font-medium">Action Required</span>
+                    <span id="action-badge" class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-md text-xs font-medium">Actualizado ahora</span>
                 </div>
             </div>
             
-            <div class="divide-y divide-[#333]">
-                <!-- Item 1 (Pending) -->
-                <div class="p-6 hover:bg-[#111] transition-colors">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fa-regular fa-user text-[#a1a1aa]"></i>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <h3 class="font-medium text-white">David Navarro</h3>
-                                    <span class="bg-[#333] text-[#a1a1aa] px-2 py-0.5 rounded text-xs">Nuevo Cliente</span>
-                                </div>
-                                <p class="text-sm text-[#a1a1aa] mb-1">Quiere reservar: <strong class="text-white font-medium">Corte + Barba (Combo VIP)</strong></p>
-                                <div class="flex items-center gap-4 text-xs text-[#a1a1aa]">
-                                    <span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> Jueves, 13 Nov</span>
-                                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> 18:30 (1h 15m)</span>
-                                    <span class="flex items-center gap-1"><i class="fa-solid fa-phone"></i> 600 123 456</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 w-full md:w-auto">
-                            <button class="flex-1 md:flex-none bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                Aceptar
-                            </button>
-                            <button class="flex-1 md:flex-none bg-[#111] hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 text-[#a1a1aa] border border-[#333] px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                Rechazar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Item 2 (Pending) -->
-                <div class="p-6 hover:bg-[#111] transition-colors">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fa-regular fa-user text-[#a1a1aa]"></i>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <h3 class="font-medium text-white">Izan Millán</h3>
-                                    <span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs">Habitual</span>
-                                </div>
-                                <p class="text-sm text-[#a1a1aa] mb-1">Quiere reservar: <strong class="text-white font-medium">Arreglo de Barba</strong></p>
-                                <div class="flex items-center gap-4 text-xs text-[#a1a1aa]">
-                                    <span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> Viernes, 14 Nov</span>
-                                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> 11:00 (30 min)</span>
-                                    <span class="flex items-center gap-1"><i class="fa-solid fa-phone"></i> 611 987 654</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 w-full md:w-auto">
-                            <button class="flex-1 md:flex-none bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                Aceptar
-                            </button>
-                            <button class="flex-1 md:flex-none bg-[#111] hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 text-[#a1a1aa] border border-[#333] px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                Rechazar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Item 3 (Waitlist / Conflict) -->
-                <div class="p-6 bg-[#1a1500]/30 hover:bg-[#1a1500]/50 transition-colors">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-full bg-[#1a1a1a] border border-yellow-500/30 flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fa-solid fa-triangle-exclamation text-yellow-500 text-sm"></i>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <h3 class="font-medium text-white">Rubén Hdez.</h3>
-                                    <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-0.5 rounded text-xs">Solapamiento</span>
-                                </div>
-                                <p class="text-sm text-[#a1a1aa] mb-1">Quiere reservar: <strong class="text-white font-medium">Corte de Pelo (Fade)</strong></p>
-                                <div class="flex items-center gap-4 text-xs text-[#a1a1aa]">
-                                    <span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> Jueves, 13 Nov</span>
-                                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> 18:30 (45 min)</span>
-                                </div>
-                                <p class="text-xs text-yellow-500/80 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> Esta hora choca con la solicitud de David Navarro.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 w-full md:w-auto">
-                            <button class="flex-1 md:flex-none bg-[#111] hover:bg-white/10 text-white border border-[#333] px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                Proponer otra hora
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
+            <div id="booking-list" class="divide-y divide-[#333]">
+                <!-- Cargando desde DB... -->
+                <div class="p-6 text-center text-[#a1a1aa]"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando citas...</div>
             </div>
             
             <div class="px-6 py-4 border-t border-[#333] bg-[#050505] text-center">
@@ -233,6 +145,82 @@
         </div>
 
     </main>
+    
+    <script src="./db.js"></script>
+    <script>
+        function renderBookings() {
+            const bookings = getBookings().sort((a, b) => b.timestamp - a.timestamp); // Más recientes primero
+            const container = document.getElementById('booking-list');
+            
+            if (bookings.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-[#a1a1aa]">No hay solicitudes pendientes.</div>';
+                return;
+            }
+            
+            let html = '';
+            bookings.forEach(b => {
+                const isAccepted = b.status === 'accepted';
+                const isRejected = b.status === 'rejected';
+                
+                html += `
+                <div class="p-6 hover:bg-[#111] transition-colors ${isAccepted ? 'opacity-50' : ''} ${isRejected ? 'hidden' : ''}">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa-regular fa-user text-[#a1a1aa]"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h3 class="font-medium text-white">${b.clientName}</h3>
+                                    <span class="bg-[#333] text-[#a1a1aa] px-2 py-0.5 rounded text-xs">${b.type || 'Nuevo Cliente'}</span>
+                                </div>
+                                <p class="text-sm text-[#a1a1aa] mb-1">Quiere reservar: <strong class="text-white font-medium">${b.service}</strong></p>
+                                <div class="flex items-center gap-4 text-xs text-[#a1a1aa]">
+                                    <span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${b.date}</span>
+                                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${b.time} (${b.duration})</span>
+                                    <span class="flex items-center gap-1"><i class="fa-solid fa-phone"></i> ${b.phone}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 w-full md:w-auto">
+                            ${isAccepted ? 
+                                '<span class="text-green-500 text-sm font-medium"><i class="fa-solid fa-check mr-1"></i> Aceptada</span>' : 
+                                `<button onclick="handleStatus('${b.id}', 'accepted')" class="flex-1 md:flex-none bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-md text-sm font-medium transition-colors">Aceptar</button>
+                                 <button onclick="handleStatus('${b.id}', 'rejected')" class="flex-1 md:flex-none bg-[#111] hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 text-[#a1a1aa] border border-[#333] px-4 py-2 rounded-md text-sm font-medium transition-colors">Rechazar</button>`
+                            }
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
 
+        function handleStatus(id, status) {
+            updateBookingStatus(id, status);
+            renderBookings();
+        }
+
+        // Renderizar al cargar
+        renderBookings();
+        
+        // Escuchar cambios en la base de datos (por si entran nuevas reservas)
+        window.addEventListener('storage', () => {
+            renderBookings();
+            const badge = document.getElementById('action-badge');
+            badge.innerText = "¡Nueva cita!";
+            badge.classList.replace('bg-blue-500/10', 'bg-green-500/20');
+            badge.classList.replace('text-blue-400', 'text-green-400');
+            badge.classList.replace('border-blue-500/20', 'border-green-500/40');
+            
+            setTimeout(() => {
+                badge.innerText = "Actualizado";
+                badge.classList.replace('bg-green-500/20', 'bg-blue-500/10');
+                badge.classList.replace('text-green-400', 'text-blue-400');
+                badge.classList.replace('border-green-500/40', 'border-blue-500/20');
+            }, 3000);
+        });
+    </script>
 </body>
 </html>

@@ -347,10 +347,10 @@
                     
                     <div class="space-y-4 mb-8">
                         <div>
-                            <input type="text" placeholder="Nombre completo" class="w-full bg-black/50 border border-white/10 p-3 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
+                            <input type="text" id="client-name" placeholder="Nombre completo" class="w-full bg-black/50 border border-white/10 p-3 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
                         </div>
                         <div>
-                            <input type="tel" placeholder="Teléfono" class="w-full bg-black/50 border border-white/10 p-3 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
+                            <input type="tel" id="client-phone" placeholder="Teléfono" class="w-full bg-black/50 border border-white/10 p-3 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
                         </div>
                     </div>
 
@@ -358,11 +358,11 @@
                         <h4 class="text-sm font-semibold text-white mb-2 uppercase tracking-wider">Resumen de la cita</h4>
                         <div class="flex justify-between text-gray-400 text-sm mb-1">
                             <span>Servicio:</span>
-                            <span class="text-white">Corte de Pelo (Fade)</span>
+                            <span class="text-white" id="summary-service">Corte de Pelo (Fade)</span>
                         </div>
                         <div class="flex justify-between text-gray-400 text-sm">
                             <span>Cuándo:</span>
-                            <span class="text-white">Hoy, 12:15</span>
+                            <span class="text-white" id="summary-datetime">Hoy, 12:15</span>
                         </div>
                     </div>
 
@@ -390,8 +390,28 @@
 
             </div>
             
+            <script src="./db.js"></script>
             <script>
+                let currentBooking = {
+                    service: 'Corte Clásico / Fade',
+                    duration: '45 min',
+                    date: 'Hoy',
+                    time: '12:15'
+                };
+
+                // Actualizar resumen
+                function updateSummary() {
+                    document.getElementById('summary-service').innerText = currentBooking.service;
+                    document.getElementById('summary-datetime').innerText = `${currentBooking.date}, ${currentBooking.time}`;
+                }
+
                 function nextStep(step) {
+                    if(step === 2) {
+                        const selectedService = document.querySelector('input[name="service"]:checked');
+                        currentBooking.service = selectedService.value;
+                        currentBooking.duration = selectedService.parentElement.nextElementSibling.innerText;
+                        updateSummary();
+                    }
                     document.querySelectorAll('.booking-step').forEach(el => el.classList.add('hidden'));
                     document.getElementById('step-' + step).classList.remove('hidden');
                     updateProgress(step);
@@ -420,6 +440,24 @@
                 }
                 
                 function confirmBooking() {
+                    const name = document.getElementById('client-name').value;
+                    const phone = document.getElementById('client-phone').value;
+                    
+                    if(!name || !phone) {
+                        alert("Por favor, introduce tu nombre y teléfono.");
+                        return;
+                    }
+                    
+                    // Guardar en la base de datos simulada
+                    createBooking({
+                        clientName: name,
+                        phone: phone,
+                        service: currentBooking.service,
+                        date: currentBooking.date,
+                        time: currentBooking.time,
+                        duration: currentBooking.duration
+                    });
+
                     document.querySelectorAll('.booking-step').forEach(el => el.classList.add('hidden'));
                     document.getElementById('step-success').classList.remove('hidden');
                     document.querySelector('.flex.justify-between.mb-8.relative.z-10').classList.add('hidden');
@@ -431,6 +469,8 @@
                             b.className = 'date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all';
                         });
                         this.className = 'date-btn active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)]';
+                        currentBooking.date = this.querySelector('span.text-xs').innerText + ' ' + this.querySelector('span.text-xl').innerText;
+                        updateSummary();
                     });
                 });
                 
@@ -440,6 +480,8 @@
                             b.className = 'time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all';
                         });
                         this.className = 'time-btn py-2 border border-white bg-white/5 text-white font-bold transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)]';
+                        currentBooking.time = this.innerText;
+                        updateSummary();
                     });
                 });
             </script>
