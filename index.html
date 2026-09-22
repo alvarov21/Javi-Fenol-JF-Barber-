@@ -359,6 +359,10 @@
                         <div>
                             <input type="tel" id="client-phone" placeholder="Teléfono" class="w-full bg-black/50 border border-white/10 p-3 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
                         </div>
+                        <div class="flex items-start gap-2 mt-2">
+                            <input type="checkbox" id="rgpd-consent" class="mt-1 bg-black/50 border-white/10 accent-white">
+                            <label for="rgpd-consent" class="text-xs text-gray-500">He leído y acepto la política de privacidad. Consiento el tratamiento de mis datos personales para gestionar la reserva según el RGPD.</label>
+                        </div>
                     </div>
 
                     <div class="bg-black/30 p-4 border border-white/5 mb-8">
@@ -399,12 +403,75 @@
             
             <script src="./db.js"></script>
             <script>
+                const PRICING = {
+                    'Corte Clásico / Fade': 15,
+                    'Arreglo de Barba': 10,
+                    'Arreglo de Barba VIP': 12,
+                    'Corte + Barba': 25,
+                    'Corte + Barba (Combo VIP)': 25
+                };
+
                 let currentBooking = {
                     service: 'Corte Clásico / Fade',
                     duration: '45 min',
-                    date: 'Hoy',
+                    date: '',
+                    fullDate: '',
                     time: '12:15'
                 };
+
+                // Array de horas (de 9 a 20 con descanso 14-16)
+                const availableHours = [
+                    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+                    "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"
+                ];
+
+                function renderAvailableHours(bookedTimes = []) {
+                    const container = document.querySelector('.grid.grid-cols-3');
+                    let html = '';
+                    
+                    availableHours.forEach(time => {
+                        const isBooked = bookedTimes.includes(time);
+                        if (isBooked) {
+                            html += `<button class="time-btn py-2 border border-white/5 text-gray-600 bg-white/5 cursor-not-allowed text-sm relative overflow-hidden" disabled>
+                                        <span class="relative z-10 opacity-50">${time}</span>
+                                        <div class="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.02)_10px,rgba(255,255,255,0.02)_20px)]"></div>
+                                    </button>`;
+                        } else {
+                            html += `<button class="time-btn py-2 border border-white/10 text-white hover:border-white/50 transition-all text-sm" onclick="selectTime(this, '${time}')">${time}</button>`;
+                        }
+                    });
+                    
+                    container.innerHTML = html;
+                }
+
+                // Obtiene disponibilidad REAL de la DB y bloquea botones
+                async function updateAvailableTimes() {
+                    try {
+                        const bookings = await getBookings();
+                        // Filtrar por estado aceptado Y coincidencia exacta de fullDate
+                        const dayBookings = bookings.filter(b => 
+                            b.status === 'accepted' && 
+                            b.fullDate === currentBooking.fullDate
+                        );
+                        
+                        const bookedTimes = dayBookings.map(b => b.time);
+                        renderAvailableHours(bookedTimes);
+                    } catch(e) {
+                        console.error('Error updating times:', e);
+                        renderAvailableHours([]);
+                    }
+                }
+
+                function selectTime(btn, time) {
+                    document.querySelectorAll('.time-btn').forEach(b => {
+                        b.classList.remove('border-white', 'bg-white/10');
+                        b.classList.add('border-white/10');
+                    });
+                    btn.classList.remove('border-white/10');
+                    btn.classList.add('border-white', 'bg-white/10');
+                    currentBooking.time = time;
+                    updateSummary();
+                }
 
                 // Actualizar resumen
                 function updateSummary() {
@@ -452,6 +519,11 @@
                     
                     if(!name || !phone) {
                         alert("Por favor, introduce tu nombre y teléfono.");
+                        return;
+                    }
+                    
+                    if(!document.getElementById('rgpd-consent').checked) {
+                        alert("Debes aceptar la política de privacidad (RGPD) para poder reservar.");
                         return;
                     }
                     

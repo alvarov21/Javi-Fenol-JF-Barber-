@@ -7,7 +7,7 @@ const redis = new Redis({
 });
 
 const BOOKINGS_KEY = 'jfbarber_bookings';
-const ADMIN_SECRET = 'javibarber7'; // Se puede pasar a process.env.ADMIN_PASSWORD en el futuro
+const ADMIN_SECRET = process.env.ADMIN_PASSWORD || 'javibarber7';
 
 module.exports = async (req, res) => {
   // Configurar CORS
@@ -22,6 +22,21 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // Rate Limiting Básico (Anti-Spam / Anti-Fuerza Bruta)
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const rlKey = `rate_limit:${ip}`;
+    const reqs = await redis.incr(rlKey);
+    if (reqs === 1) await redis.expire(rlKey, 60); // Caduca en 60 seg
+    
+    // Si intenta demasiados POST o verificaciones de contraseña, lo bloqueamos
+    if (reqs > 20 && req.method === 'POST') return res.status(429).json({ error: 'Too many requests' });
+    if (reqs > 10 && req.query.verify === '1') return res.status(429).json({ error: 'Too many login attempts' });
+  } catch (e) {
+    // Si falla Redis, seguimos adelante para no bloquear la app entera
+    console.error('Rate limit error:', e);
   }
 
   const authHeader = req.headers.authorization;
