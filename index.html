@@ -299,39 +299,8 @@
                     
                     <div class="mb-6">
                         <label class="block text-sm text-gray-400 mb-2">Día</label>
-                        <div class="flex gap-2 overflow-x-auto pb-2" style="scrollbar-width: none;">
-                            <button class="date-btn active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-                                <span class="text-xs text-gray-400">Hoy</span>
-                                <span class="text-xl font-bold text-white">12</span>
-                            </button>
-                            <button class="date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all">
-                                <span class="text-xs text-gray-400">Vie</span>
-                                <span class="text-xl font-bold text-white">13</span>
-                            </button>
-                            <button class="date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all">
-                                <span class="text-xs text-gray-400">Sáb</span>
-                                <span class="text-xl font-bold text-white">14</span>
-                            </button>
-                            <button class="date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all">
-                                <span class="text-xs text-gray-400">Lun</span>
-                                <span class="text-xl font-bold text-white">16</span>
-                            </button>
-                            <button class="date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all">
-                                <span class="text-xs text-gray-400">Mar</span>
-                                <span class="text-xl font-bold text-white">17</span>
-                            </button>
-                            <button class="date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all">
-                                <span class="text-xs text-gray-400">Mié</span>
-                                <span class="text-xl font-bold text-white">18</span>
-                            </button>
-                            <button class="date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all">
-                                <span class="text-xs text-gray-400">Jue</span>
-                                <span class="text-xl font-bold text-white">19</span>
-                            </button>
-                            <button class="date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all">
-                                <span class="text-xs text-gray-400">Vie</span>
-                                <span class="text-xl font-bold text-white">20</span>
-                            </button>
+                        <div class="flex gap-2 overflow-x-auto pb-2" style="scrollbar-width: none;" id="dates-container">
+                            <!-- Los botones se generarán con JavaScript aquí -->
                         </div>
                     </div>
 
@@ -499,16 +468,57 @@
                     document.querySelector('.flex.justify-between.mb-8.relative.z-10').classList.add('hidden');
                 }
                 
-                document.querySelectorAll('.date-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        document.querySelectorAll('.date-btn').forEach(b => {
-                            b.className = 'date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all';
+                // Fechas dinámicas (España / Local)
+                function setupDynamicDates() {
+                    const container = document.getElementById('dates-container');
+                    container.innerHTML = '';
+                    
+                    const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                    
+                    let dateObj = new Date();
+                    let daysAdded = 0;
+                    let i = 0;
+                    
+                    while (daysAdded < 10 && i < 30) {
+                        if (dateObj.getDay() !== 0) { // Si no es domingo
+                            const isToday = (daysAdded === 0 && dateObj.getDate() === new Date().getDate());
+                            const dayName = isToday ? 'Hoy' : diasSemana[dateObj.getDay()];
+                            const dayNumber = dateObj.getDate();
+                            
+                            const btn = document.createElement('button');
+                            btn.className = 'date-btn flex-shrink-0 w-16 h-20 border flex flex-col items-center justify-center gap-1 rounded-sm transition-all ' + 
+                                (isToday ? 'active border-white bg-white/5 shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'border-white/10 hover:border-white/50');
+                            
+                            btn.innerHTML = `
+                                <span class="text-xs text-gray-400">${dayName}</span>
+                                <span class="text-xl font-bold text-white">${dayNumber}</span>
+                            `;
+                            
+                            container.appendChild(btn);
+                            
+                            if (isToday) {
+                                currentBooking.date = `${dayName} ${dayNumber}`;
+                            }
+                            daysAdded++;
+                        }
+                        dateObj.setDate(dateObj.getDate() + 1);
+                        i++;
+                    }
+                    
+                    // Attach events to new buttons
+                    document.querySelectorAll('.date-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            document.querySelectorAll('.date-btn').forEach(b => {
+                                b.className = 'date-btn flex-shrink-0 w-16 h-20 border border-white/10 hover:border-white/50 flex flex-col items-center justify-center gap-1 rounded-sm transition-all';
+                            });
+                            this.className = 'date-btn active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)]';
+                            currentBooking.date = this.querySelector('span.text-xs').innerText + ' ' + this.querySelector('span.text-xl').innerText;
+                            updateSummary();
                         });
-                        this.className = 'date-btn active flex-shrink-0 w-16 h-20 border border-white bg-white/5 flex flex-col items-center justify-center gap-1 rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.2)]';
-                        currentBooking.date = this.querySelector('span.text-xs').innerText + ' ' + this.querySelector('span.text-xl').innerText;
-                        updateSummary();
                     });
-                });
+                }
+                
+                setupDynamicDates();
                 
                 document.querySelectorAll('.time-btn:not(.cursor-not-allowed)').forEach(btn => {
                     btn.addEventListener('click', function() {
