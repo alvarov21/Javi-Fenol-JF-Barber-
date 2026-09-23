@@ -124,7 +124,7 @@
         </div>
 
         <!-- Metrics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
             <div class="bg-[#0a0a0a] geist-border rounded-xl p-5 flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-[#a1a1aa] text-sm font-medium">Pendientes de Confirmar</h3>
@@ -143,15 +143,6 @@
                 <div class="flex items-end gap-2">
                     <span id="metric-hoy" class="text-3xl font-semibold">0</span>
                     <span class="text-green-500 text-sm mb-1 font-medium">Agenda</span>
-                </div>
-            </div>
-            <div class="bg-[#0a0a0a] geist-border rounded-xl p-5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-[#a1a1aa] text-sm font-medium">Facturación Estimada</h3>
-                    <i class="fa-solid fa-chart-line text-[#a1a1aa]"></i>
-                </div>
-                <div class="flex items-end gap-2">
-                    <span id="metric-facturacion" class="text-3xl font-semibold">0€</span>
                 </div>
             </div>
         </div>
@@ -179,14 +170,6 @@
     
     <script src="./db.js"></script>
     <script>
-        const PRICING = {
-            'Corte Clásico / Fade': 15,
-            'Arreglo de Barba': 10,
-            'Arreglo de Barba VIP': 12,
-            'Corte + Barba': 25,
-            'Corte + Barba (Combo VIP)': 25
-        };
-
         window.allBookings = [];
         async function renderBookings() {
             window.allBookings = await getBookings();
@@ -197,19 +180,16 @@
             // Actualizar métricas dinámicas
             let pendientes = 0;
             let citasHoy = 0;
-            let facturacion = 0;
 
             bookings.forEach(b => {
                 if (b.status === 'pending') pendientes++;
                 if (b.date && b.date.toLowerCase().includes('hoy') && b.status !== 'rejected') {
                     citasHoy++;
-                    facturacion += (PRICING[b.service] || 15);
                 }
             });
 
             document.getElementById('metric-pendientes').innerText = pendientes;
             document.getElementById('metric-hoy').innerText = citasHoy;
-            document.getElementById('metric-facturacion').innerText = facturacion + '€';
 
             if (bookings.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-[#a1a1aa]">No hay solicitudes pendientes.</div>';
