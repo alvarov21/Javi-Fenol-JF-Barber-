@@ -21,27 +21,9 @@ module.exports = async (req, res) => {
   const authHeader = req.headers.authorization;
   const hasToken = authHeader && authHeader.trim() !== 'Bearer' && authHeader.trim() !== 'Bearer null' && authHeader.trim() !== 'Bearer invalid_token';
 
-  // Rate Limiting Básico (Anti-Spam / Anti-Fuerza Bruta)
-  try {
-    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-    const rlKey = `rate_limit:${ip}`;
-    const reqs = await redis.incr(rlKey);
-    if (reqs === 1) await redis.expire(rlKey, 60 * 15); // Caduca en 15 minutos (900s)
-    
-    // Si intenta demasiados requests (fuerza bruta o spam) lo bloqueamos (429)
-    if (reqs > 5) {
-        if (req.method === 'POST') return res.status(429).json({ error: 'Too many requests' });
-        // Si no es admin y está mandando un token (intento de login)
-        if (hasToken) return res.status(429).json({ error: 'Too many attempts' });
-    }
-  } catch (e) {
-    console.error('Rate limit error:', e);
-  }
-
   let isAdmin = false;
   if (hasToken) {
     const token = authHeader.replace('Bearer ', '').trim();
-    // Validar sesión en Redis
     const valid = await redis.get(`session:${token}`);
     if (valid === 'valid') {
       isAdmin = true;
@@ -50,11 +32,27 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Rate Limiting Básico (Anti-Spam)
+  // No bloquear al administrador legítimo
+  if (!isAdmin) {
+    try {
+      const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+      const rlKey = `rate_limit:${ip}`;
+      const reqs = await redis.incr(rlKey);
+      if (reqs === 1) await redis.expire(rlKey, 60 * 15);
+      
+      if (reqs > 5) {
+          if (req.method === 'POST') return res.status(429).json({ error: 'Too many requests' });
+      }
+    } catch (e) {
+      console.error('Rate limit error:', e);
+    }
+  }
+
   try {
     let bookings = await redis.get(BOOKINGS_KEY);
     if (!bookings) bookings = [];
 
-    // Backfill fullDate para citas antiguas
     let migrated = false;
     bookings.forEach(b => {
       if (!b.fullDate) {
@@ -95,7 +93,6 @@ module.exports = async (req, res) => {
       newBooking.status = isAdmin ? 'accepted' : 'pending';
       newBooking.timestamp = Date.now();
 
-      // Si el admin la crea manual y ya es aceptada, reservar el hueco
       if (isAdmin) {
           const lockKey = `slot:${newBooking.fullDate}:${newBooking.time}`;
           const acquired = await redis.set(lockKey, 'locked', { nx: true });
@@ -107,7 +104,6 @@ module.exports = async (req, res) => {
       bookings.push(newBooking);
       await redis.set(BOOKINGS_KEY, bookings);
 
-      // Limpiar respuesta pública
       if (!isAdmin) {
           return res.status(200).json({ success: true, booking: { id: newBooking.id, status: newBooking.status } });
       }
