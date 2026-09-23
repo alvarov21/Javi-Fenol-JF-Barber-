@@ -1,23 +1,17 @@
 const { Redis } = require('@upstash/redis');
 
-// Initialize Redis using the variables injected by Vercel Upstash Integration
 const redis = new Redis({
   url: process.env.JFBARBER_STORAGE_KV_REST_API_URL,
   token: process.env.JFBARBER_STORAGE_KV_REST_API_TOKEN,
 });
 
 const BOOKINGS_KEY = 'jfbarber_bookings';
-const ADMIN_SECRET = process.env.ADMIN_API_SECRET || 'jf_barber_secure_2026_xyz_!99';
 
 module.exports = async (req, res) => {
-  // Configurar CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -25,7 +19,6 @@ module.exports = async (req, res) => {
   }
 
   const authHeader = req.headers.authorization;
-  const isAdmin = authHeader === `Bearer ${ADMIN_SECRET}`;
   const hasToken = authHeader && authHeader.trim() !== 'Bearer' && authHeader.trim() !== 'Bearer null' && authHeader.trim() !== 'Bearer invalid_token';
 
   // Rate Limiting Básico (Anti-Spam / Anti-Fuerza Bruta)
@@ -39,20 +32,39 @@ module.exports = async (req, res) => {
     if (reqs > 5) {
         if (req.method === 'POST') return res.status(429).json({ error: 'Too many requests' });
         // Si no es admin y está mandando un token (intento de login)
-        if (hasToken && !isAdmin) return res.status(429).json({ error: 'Too many login attempts' });
+        if (hasToken) return res.status(429).json({ error: 'Too many attempts' });
     }
   } catch (e) {
     console.error('Rate limit error:', e);
   }
 
-  // Si envían un token explícito pero es incorrecto
-  if (hasToken && !isAdmin) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  let isAdmin = false;
+  if (hasToken) {
+    const token = authHeader.replace('Bearer ', '').trim();
+    // Validar sesión en Redis
+    const valid = await redis.get(`session:${token}`);
+    if (valid === 'valid') {
+      isAdmin = true;
+    } else {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   try {
     let bookings = await redis.get(BOOKINGS_KEY);
     if (!bookings) bookings = [];
+
+    // Backfill fullDate para citas antiguas
+    let migrated = false;
+    bookings.forEach(b => {
+      if (!b.fullDate) {
+        b.fullDate = new Date(b.timestamp || Date.now()).toISOString().split('T')[0];
+        migrated = true;
+      }
+    });
+    if (migrated) {
+      await redis.set(BOOKINGS_KEY, bookings);
+    }
 
     if (req.method === 'GET') {
       if (req.query.verify === '1') {
@@ -62,7 +74,6 @@ module.exports = async (req, res) => {
       if (isAdmin) {
         return res.status(200).json(bookings);
       } else {
-        // SANITIZACIÓN: Eliminar datos personales (RGPD) para el frontend público
         const sanitized = bookings.map(b => ({
           id: b.id,
           date: b.date,
@@ -76,43 +87,64 @@ module.exports = async (req, res) => {
     
     if (req.method === 'POST') {
       const newBooking = req.body;
-      
-      // Comprobar si ya existe una reserva para ese día y hora (que esté aceptada)
-      const isTaken = bookings.some(b => 
-          (b.fullDate === newBooking.fullDate || b.date === newBooking.date) && 
-          b.time === newBooking.time && 
-          b.status === 'accepted'
-      );
-      
-      if (isTaken) {
-          return res.status(409).json({ error: 'La hora ya ha sido ocupada por otra persona.' });
+      if (!newBooking.clientName || !newBooking.phone || !newBooking.fullDate || !newBooking.time) {
+          return res.status(400).json({ error: 'Missing required fields' });
       }
-      
+
+      newBooking.id = Date.now().toString() + Math.random().toString(36).substring(7);
+      newBooking.status = isAdmin ? 'accepted' : 'pending';
+      newBooking.timestamp = Date.now();
+
+      // Si el admin la crea manual y ya es aceptada, reservar el hueco
+      if (isAdmin) {
+          const lockKey = `slot:${newBooking.fullDate}:${newBooking.time}`;
+          const acquired = await redis.set(lockKey, 'locked', { nx: true });
+          if (!acquired) {
+              return res.status(409).json({ error: 'Slot already taken' });
+          }
+      }
+
       bookings.push(newBooking);
       await redis.set(BOOKINGS_KEY, bookings);
-      
-      return res.status(201).json(newBooking);
-    }
-    
-    if (req.method === 'PUT') {
+
+      // Limpiar respuesta pública
       if (!isAdmin) {
-          return res.status(401).json({ error: 'Unauthorized' });
+          return res.status(200).json({ success: true, booking: { id: newBooking.id, status: newBooking.status } });
       }
+
+      return res.status(200).json({ success: true, booking: newBooking });
+    }
+
+    if (req.method === 'PUT') {
+      if (!isAdmin) return res.status(401).json({ error: 'Unauthorized' });
 
       const { id, status } = req.body;
       const index = bookings.findIndex(b => b.id === id);
       
-      if (index !== -1) {
+      if (index > -1) {
+        const booking = bookings[index];
+
+        if (status === 'accepted') {
+            const lockKey = `slot:${booking.fullDate}:${booking.time}`;
+            const acquired = await redis.set(lockKey, 'locked', { nx: true });
+            if (!acquired) {
+                return res.status(409).json({ error: 'Slot already taken' });
+            }
+        } else if (status === 'rejected' && booking.status === 'accepted') {
+            const lockKey = `slot:${booking.fullDate}:${booking.time}`;
+            await redis.del(lockKey);
+        }
+
         bookings[index].status = status;
         await redis.set(BOOKINGS_KEY, bookings);
-        return res.status(200).json(bookings[index]);
+        return res.status(200).json({ success: true });
+      } else {
+        return res.status(404).json({ error: 'Not found' });
       }
-      return res.status(404).json({ error: 'Booking not found' });
     }
 
-    return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
-    console.error('Redis error:', error);
-    return res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    console.error('Redis Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 };

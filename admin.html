@@ -197,7 +197,9 @@
 
             bookings.forEach(b => {
                 if (b.status === 'pending') pendientes++;
-                if (b.date && b.date.toLowerCase().includes('hoy') && b.status !== 'rejected') {
+                
+                const todayISO = new Date().toISOString().split('T')[0];
+                if ((b.fullDate === todayISO || (b.date && b.date.toLowerCase().includes('hoy'))) && b.status !== 'rejected') {
                     citasHoy++;
                 }
             });
@@ -283,24 +285,30 @@
             const btn = document.getElementById('login-btn');
             btn.innerText = 'Verificando...';
             
-            // Separación de clave UI y secreto API (Seguridad contra fuerza bruta)
-            const apiToken = pwd === 'javibarber7' ? 'jf_barber_secure_2026_xyz_!99' : 'invalid_token';
-            localStorage.setItem('jf_admin_token', apiToken);
-            
-            const token = getAdminToken();
-            const headers = { 'Authorization': `Bearer ${token}` };
-            const response = await fetch('/api/bookings?verify=1', { headers });
-            
-            if (response.ok) {
-                document.getElementById('login-overlay').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('login-overlay').classList.add('hidden');
-                }, 500);
-                await renderBookings();
-            } else {
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pwd })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('jf_admin_token', data.token);
+                    document.getElementById('login-overlay').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('login-overlay').classList.add('hidden');
+                    }, 500);
+                    await renderBookings();
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                    localStorage.removeItem('jf_admin_token');
+                }
+            } catch (err) {
+                console.error(err);
                 document.getElementById('login-error').classList.remove('hidden');
-                localStorage.removeItem('jf_admin_token');
             }
+            
             btn.innerText = 'Entrar';
         }
 
@@ -372,18 +380,28 @@
                 return;
             }
 
+            // Si es "Hoy", calculamos el fullDate. Si no, usamos el input.
+            let fullDate = new Date().toISOString().split('T')[0];
+            if (date.toLowerCase() !== 'hoy') {
+                // Aquí el admin tendría que poner YYYY-MM-DD para que no falle el anti-colisión
+                fullDate = date;
+            }
+
             // Usar la función de db.js
-            const newBooking = await createBooking({
+            const res = await createBooking({
                 clientName: name,
                 phone: phone,
                 service: service,
                 date: date,
+                fullDate: fullDate,
                 time: time,
                 duration: service.includes('Combo') ? '1h 15m' : '45 min'
             });
 
-            // La creamos como confirmada directamente
-            await updateBookingStatus(newBooking.id, 'accepted');
+            if (!res.success) {
+                showToast("Error: " + res.error);
+                return;
+            }
             
             closeModal();
             await renderBookings();
