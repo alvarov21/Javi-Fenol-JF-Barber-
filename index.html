@@ -683,11 +683,35 @@
                     const dayBookings = allBookings.filter(b => (b.fullDate === currentBooking.fullDate || b.date === currentBooking.date) && b.status === 'accepted');
                     const bookedTimes = dayBookings.map(b => b.time);
                     
+                    const now = new Date();
+                    const offset = now.getTimezoneOffset() * 60000;
+                    const todayISO = new Date(now.getTime() - offset).toISOString().split('T')[0];
+                    const isToday = currentBooking.fullDate === todayISO || currentBooking.date.toLowerCase().includes('hoy');
+                    
+                    const currentHour = now.getHours();
+                    const currentMinute = now.getMinutes();
+                    
+                    let timeWasReset = false;
+
                     document.querySelectorAll('.time-btn').forEach(btn => {
                         const t = btn.innerText;
-                        if(bookedTimes.includes(t)) {
+                        
+                        let isPast = false;
+                        if (isToday) {
+                            const [btnHour, btnMinute] = t.split(':').map(Number);
+                            if (btnHour < currentHour || (btnHour === currentHour && btnMinute <= currentMinute)) {
+                                isPast = true;
+                            }
+                        }
+
+                        if(bookedTimes.includes(t) || isPast) {
                             // Bloquear hora
                             btn.className = 'time-btn py-2 border border-white/10 text-white opacity-20 cursor-not-allowed pointer-events-none text-sm';
+                            
+                            if (currentBooking.time === t) {
+                                currentBooking.time = '';
+                                timeWasReset = true;
+                            }
                         } else {
                             // Liberar hora
                             if(currentBooking.time === t) {
@@ -698,9 +722,7 @@
                         }
                     });
                     
-                    // Resetear la hora elegida si justo estaba ocupada
-                    if(bookedTimes.includes(currentBooking.time)) {
-                        currentBooking.time = '';
+                    if (timeWasReset) {
                         updateSummary();
                     }
                 }
