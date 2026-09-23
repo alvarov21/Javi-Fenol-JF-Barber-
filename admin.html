@@ -327,8 +327,8 @@
                 });
                 if (response.ok) {
                     document.getElementById('login-overlay').classList.add('hidden');
-                    renderBookings();
-                } else {
+                    await renderBookings();
+                } else if (response.status === 401) {
                     localStorage.removeItem('jf_admin_token');
                 }
             }

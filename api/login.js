@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
     const token = crypto.randomBytes(32).toString('hex');
-    await redis.set(`session:${token}`, 'valid', { ex: 60 * 60 * 24 }); // 24 hours TTL
+    await redis.set(`session:${token}`, 'valid', { ex: 60 * 60 * 24 * 30 }); // 30 días TTL
     return res.status(200).json({ token });
   } else {
     return res.status(401).json({ error: 'Unauthorized' });
